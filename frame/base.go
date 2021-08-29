@@ -10,6 +10,7 @@ type baseFrame struct {
 	headBegin  int     // line number of the block beginning, is the position of first token in the block
 	bodyBegin  int     // line number of {
 	bodyEnd    int     // line number of }, or the return statement
+	blockEnd   int     // the block end line,
 	path       string  // frame path, is the unique name of a frame
 	InnerFrame []Frame // child block in current block
 	isReturn   bool    // whether this block contains an explicit return statement
@@ -26,6 +27,7 @@ func (frame *baseFrame) SetPosLine(headBegin, bodyBegin, bodyEnd int) {
 	frame.headBegin = headBegin
 	frame.bodyBegin = bodyBegin
 	frame.bodyEnd = bodyEnd
+	frame.blockEnd = bodyEnd
 }
 
 func (frame *baseFrame) Len() int {
@@ -76,7 +78,7 @@ func (frame *baseFrame) GenEnding(content []byte) []byte {
 }
 
 func (frame *baseFrame) String() string {
-	str := fmt.Sprintf("%s %d{%d:%d}", frame.path, frame.headBegin, frame.bodyBegin, frame.bodyEnd)
+	str := fmt.Sprintf("%s %d{%d:%d}%d", frame.path, frame.headBegin, frame.bodyBegin, frame.bodyEnd, frame.blockEnd)
 	if frame.isReturn {
 		str += " [return]"
 	}

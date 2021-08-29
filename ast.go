@@ -180,7 +180,7 @@ func (p *Parser) parseStmt(stmt ast.Stmt, currentFrame frame.Frame) {
 	switch typed := stmt.(type) {
 	case *ast.ReturnStmt:
 		// todo: parse function lit in return statement
-		currentFrame.SetReturn(p.getLine(typed.End()))
+		currentFrame.SetReturn(p.getLine(typed.Pos()))
 		log.Debugf("%s>>>> found return at pos: %v", p.genPrintPrefix(), p.getLine(typed.End()))
 	case *ast.IfStmt:
 		p.parseIf(typed)
