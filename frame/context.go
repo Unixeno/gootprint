@@ -41,7 +41,6 @@ func (root *Context) GetCurrent() Frame {
 	}
 }
 
-
 func (root *Context) Push(frame Frame) {
 	root.GetCurrent().Append(frame)
 	root.indexes = append(root.indexes, 0)
@@ -76,7 +75,11 @@ func (root *Context) PrepareGenerate() {
 		}
 
 		root.hooks[frame.BodyBeginning()] = append(root.hooks[frame.BodyBeginning()], frame.GenBeginning)
-		root.hooks[frame.BodyEnding()] = append(root.hooks[frame.BodyEnding()], frame.GenEnding)
+		if !frame.Unreachable() {
+			root.hooks[frame.BodyEnding()] = append(root.hooks[frame.BodyEnding()], frame.GenEnding)
+		} else {
+			log.Infof("skip `%s` because it's unreachable", frame.Path())
+		}
 	})
 	log.Info("prepared")
 }

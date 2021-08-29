@@ -7,6 +7,8 @@ type Frame interface {
 	BodyBeginning() int                           // line number of {
 	BodyEnding() int                              // line number of }, or the return statement
 	SetReturn(line int)                           // mark the frame has an explicit return
+	SetUnreachable()                              // set block ending is unreachable
+	Unreachable() bool                            // whether a frame ending is unreachable
 	Path() string                                 // unique frame path
 	IsReturn() bool                               // whether this block contains an explicit return statement
 	GetInner(index int) Frame                     // get inner frame

@@ -7,13 +7,14 @@ import (
 )
 
 type baseFrame struct {
-	headBegin  int     // line number of the block beginning, is the position of first token in the block
-	bodyBegin  int     // line number of {
-	bodyEnd    int     // line number of }, or the return statement
-	blockEnd   int     // the block end line,
-	path       string  // frame path, is the unique name of a frame
-	InnerFrame []Frame // child block in current block
-	isReturn   bool    // whether this block contains an explicit return statement
+	headBegin   int     // line number of the block beginning, is the position of first token in the block
+	bodyBegin   int     // line number of {
+	bodyEnd     int     // line number of }, or the return statement
+	blockEnd    int     // the block end line,
+	path        string  // frame path, is the unique name of a frame
+	InnerFrame  []Frame // child block in current block
+	isReturn    bool    // whether this block contains an explicit return statement
+	unreachable bool    // block ending is unreachable
 }
 
 func NewBaseFrame(path string) *baseFrame {
@@ -28,6 +29,14 @@ func (frame *baseFrame) SetPosLine(headBegin, bodyBegin, bodyEnd int) {
 	frame.bodyBegin = bodyBegin
 	frame.bodyEnd = bodyEnd
 	frame.blockEnd = bodyEnd
+}
+
+func (frame *baseFrame) SetUnreachable() {
+	frame.unreachable = true
+}
+
+func (frame *baseFrame) Unreachable() bool {
+	return frame.unreachable
 }
 
 func (frame *baseFrame) Len() int {
@@ -81,6 +90,9 @@ func (frame *baseFrame) String() string {
 	str := fmt.Sprintf("%s %d{%d:%d}%d", frame.path, frame.headBegin, frame.bodyBegin, frame.bodyEnd, frame.blockEnd)
 	if frame.isReturn {
 		str += " [return]"
+	}
+	if frame.unreachable {
+		str += " [unreachable]"
 	}
 	return str
 }

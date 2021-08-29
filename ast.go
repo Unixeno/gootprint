@@ -102,17 +102,28 @@ func (p *Parser) getLine(pos token.Pos) int {
 	return p.fSet.Position(pos).Line
 }
 
-func (p *Parser) parseIf(stmt *ast.IfStmt) {
-	log.Debugf("%s>>>> found if from pos: %v to %v", p.genPrintPrefix(), p.fSet.Position(stmt.Pos()), p.fSet.Position(stmt.Body.End()))
-	p.parseBlock(stmt.Body, "if", p.getLine(stmt.Pos()), frame.NewIfElseFrame(p.frameCtx.GetInnerName("if")))
+func (p *Parser) parseIf(stmt *ast.IfStmt) bool {
+	allReturn := true
+	for {
+		log.Debugf("%s>>>> found if from pos: %v to %v", p.genPrintPrefix(), p.fSet.Position(stmt.Pos()), p.fSet.Position(stmt.Body.End()))
+		if !p.parseBlock(stmt.Body, "if", p.getLine(stmt.Pos()), frame.NewIfElseFrame(p.frameCtx.GetInnerName("if"))) {
+			allReturn = false
+		}
 
-	if stmt.Else != nil { // else
-		switch typedElse := stmt.Else.(type) {
-		case *ast.IfStmt: // else-if
-			p.parseIf(typedElse)
-		case *ast.BlockStmt: // else
-			log.Debugf("%s>>>> found if-else from pos: %v to %v", p.genPrintPrefix(), p.fSet.Position(typedElse.Pos()), p.fSet.Position(typedElse.End()))
-			p.parseBlock(typedElse, "else", p.getLine(typedElse.Pos()), frame.NewIfElseFrame(p.frameCtx.GetInnerName("else")))
+		if stmt.Else != nil { // else
+			switch typedElse := stmt.Else.(type) {
+			case *ast.IfStmt: // else-if
+				stmt = typedElse
+			case *ast.BlockStmt: // else
+				log.Debugf("%s>>>> found if-else from pos: %v to %v", p.genPrintPrefix(), p.fSet.Position(typedElse.Pos()), p.fSet.Position(typedElse.End()))
+				if !p.parseBlock(typedElse, "else", p.getLine(typedElse.Pos()), frame.NewIfElseFrame(p.frameCtx.GetInnerName("else"))) {
+					allReturn = false
+				}
+				return allReturn
+			}
+		} else {
+			// miss else
+			return false
 		}
 	}
 }
@@ -176,14 +187,18 @@ func (p *Parser) parseSwitchSelect(unionStmt ast.Stmt) {
 	}
 }
 
-func (p *Parser) parseStmt(stmt ast.Stmt, currentFrame frame.Frame) {
+// parse single statement, return true if it's a return statement
+func (p *Parser) parseStmt(stmt ast.Stmt, currentFrame frame.Frame) bool {
 	switch typed := stmt.(type) {
 	case *ast.ReturnStmt:
 		// todo: parse function lit in return statement
 		currentFrame.SetReturn(p.getLine(typed.Pos()))
 		log.Debugf("%s>>>> found return at pos: %v", p.genPrintPrefix(), p.getLine(typed.End()))
+		return true
 	case *ast.IfStmt:
-		p.parseIf(typed)
+		if p.parseIf(typed) {
+			currentFrame.SetUnreachable()
+		}
 	case *ast.SwitchStmt:
 		p.parseSwitchSelect(typed)
 	case *ast.SelectStmt:
@@ -246,12 +261,17 @@ func (p *Parser) parseStmt(stmt ast.Stmt, currentFrame frame.Frame) {
 			}
 		}
 	}
+	return false
 }
 
-func (p *Parser) parseBlockBody(stmts []ast.Stmt, currentFrame frame.Frame) {
+// parse a block, return true if it ends with a return statement
+func (p *Parser) parseBlockBody(stmts []ast.Stmt, currentFrame frame.Frame) bool {
 	for _, stmt := range stmts {
-		p.parseStmt(stmt, currentFrame)
+		if p.parseStmt(stmt, currentFrame) {
+			return true
+		}
 	}
+	return false
 }
 
 func (p *Parser) parseFuncCallExpr(callExpr *ast.CallExpr, suffix string) {
@@ -268,7 +288,7 @@ func (p *Parser) parseFuncCallExpr(callExpr *ast.CallExpr, suffix string) {
 	}
 }
 
-func (p *Parser) parseBlock(body *ast.BlockStmt, blockName string, startLine int, blockFrame frame.Frame) {
+func (p *Parser) parseBlock(body *ast.BlockStmt, blockName string, startLine int, blockFrame frame.Frame) bool {
 	p.level++
 	defer func() { p.level-- }()
 
@@ -278,7 +298,7 @@ func (p *Parser) parseBlock(body *ast.BlockStmt, blockName string, startLine int
 	p.frameCtx.Push(blockFrame)
 	defer p.frameCtx.Pop()
 
-	p.parseBlockBody(stmts, blockFrame)
+	return p.parseBlockBody(stmts, blockFrame)
 }
 
 func (p *Parser) genPrintPrefix() string {
