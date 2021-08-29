@@ -31,6 +31,9 @@ func (frame *PackageFrame) GenBeginning(content []byte) []byte {
 	buf := bytes.NewBuffer(nil)
 	buf.WriteString(fmt.Sprintf("//line %s:%d\n", frame.filename, 1)) // need reset filename
 	buf.Write(content)
+	if len(frame.InnerFrame) == 0 {
+		return buf.Bytes()
+	}
 	// do some import work
 	for _, pack := range frame.imports {
 		if pack == SDKPackage {

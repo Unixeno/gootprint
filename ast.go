@@ -92,6 +92,9 @@ func (p *Parser) parseFunc(funcDecl *ast.FuncDecl) {
 		)
 	}
 	funcFrame := frame.NewFuncFrame(p.frameCtx.GetInnerName(fullFuncName))
+	if funcDecl.Type.Results != nil {
+		funcFrame.MarkResult()
+	}
 	p.parseBlock(funcDecl.Body, fullFuncName, p.getLine(funcDecl.Pos()), funcFrame)
 }
 
