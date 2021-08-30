@@ -20,6 +20,7 @@ var clean = flag.Bool("clean", false, "delete generated files and rename source 
 var verbose = flag.Bool("v", false, "verbose mode, show debug log")
 var silence = flag.Bool("s", false, "silence mode, hide info log")
 var excludeList []string
+var path string
 
 func validateDir(dir string) bool {
 	fileInfo, err := os.Stat(dir)
@@ -71,18 +72,27 @@ func main() {
 	switch {
 	case *file != "":
 		processor = NewProcessor(*file, ModeFile)
+		path = *file
 	case *dir != "":
 		processor = NewProcessor(*dir, ModeDir)
+		path = *dir
 	case *packageDir != "":
 		processor = NewProcessor(*packageDir, ModePackage)
+		path = *packageDir
 	}
+
+	if *clean {
+		processor.ProcessClean()
+		return
+	}
+
 	startTime := time.Now()
 	processor.Process()
 
 	if *stats {
 		codeStats := processor.Stats()
 		fmt.Println("********************************************************")
-		fmt.Printf("code structure statistics for: %v\n", *file)
+		fmt.Printf("code structure statistics for: %v\n", path)
 		fmt.Printf(" >> function amount: \t%d\n", codeStats.FuncAmount)
 		fmt.Printf(" >> go func amount: \t%d\n", codeStats.GoFuncAmount)
 		fmt.Printf(" >> if amount: \t\t%d\n", codeStats.IfAmount)
