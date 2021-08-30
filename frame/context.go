@@ -70,8 +70,10 @@ func (root *Context) PrepareGenerate() {
 		beginLine := frame.BodyBeginning()
 		endingLine := frame.BodyEnding()
 		if beginLine == endingLine {
-			log.Warnf("block exist in same line, ignore generate, %s", frame)
-			return
+			if _, ok := frame.(*GoFuncFrame); !ok {
+				log.Warnf("block exist in same line, ignore generate, %s", frame)
+				return
+			}
 		}
 
 		root.hooks[frame.BodyBeginning()] = append(root.hooks[frame.BodyBeginning()], frame.GenBeginning)

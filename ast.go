@@ -247,10 +247,10 @@ func (p *Parser) parseStmt(stmt ast.Stmt, currentFrame frame.Frame) bool {
 			newGoFrame := frame.NewGoFuncFrame(p.frameCtx.GetInnerName("go-anonymous"))
 			p.parseBlock(funcLit.Body, "anonymous-go", p.getLine(funcLit.Pos()), newGoFrame)
 		} else if ident, ok := typed.Call.Fun.(*ast.Ident); ok {
-			// todo: go func()，need some tricks to inject our code
 			log.Debugf("%sfound go func call, target `%v` at pos: %v", p.genPrintPrefix(), ident.Name, p.fSet.Position(ident.Pos()))
 			newGoFrame := frame.NewGoFuncFrame(p.frameCtx.GetInnerName("go-" + ident.Name))
-			newGoFrame.SetPosLine(p.getLine(typed.Pos()), p.getLine(typed.Pos()), p.getLine(typed.Call.End()))
+			newGoFrame.SetPosLine(p.getLine(typed.Pos()), p.getLine(ident.Pos()), p.getLine(typed.Call.End()))
+			newGoFrame.SetTarget(ident.Name)
 			p.frameCtx.Push(newGoFrame)
 			p.frameCtx.Pop() // inject a frame to track goroutine
 		}
