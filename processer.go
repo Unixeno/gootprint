@@ -82,9 +82,9 @@ func (p *Processor) processPackage(packagePath string) {
 	for _, exclude := range excludeList {
 		excludePath = append(excludePath, path.Join(packagePath, exclude))
 	}
-	_ = filepath.WalkDir(packagePath, func(path string, d fs.DirEntry, err error) error {
-		if pathFilter(path, excludePath) {
-			log.Info("filter: ", path)
+	_ = filepath.WalkDir(packagePath, func(filePath string, d fs.DirEntry, err error) error {
+		if pathFilter(filePath, excludePath) {
+			log.Info("filter: ", filePath)
 			if d.IsDir() {
 				return fs.SkipDir
 			}
@@ -103,7 +103,7 @@ func (p *Processor) processPackage(packagePath string) {
 			strings.HasSuffix(filename, ".gen.go") {
 			return nil
 		}
-		files = append(files, path)
+		files = append(files, filePath)
 		return nil
 	})
 	for _, filename := range files {
@@ -137,10 +137,10 @@ func (p *Processor) ProcessClean() {
 	}
 }
 
-func (p *Processor) cleanFile(path string) {
-	log.Debugf("clean for `%s`", path)
-	generated := path + ".gen.go"
-	backup := path + ".gen_bak"
+func (p *Processor) cleanFile(filePath string) {
+	log.Debugf("clean for `%s`", filePath)
+	generated := filePath + ".gen.go"
+	backup := filePath + ".gen_bak"
 	// try to delete gen.go file
 	info, err := os.Stat(generated)
 	if err != nil && !os.IsNotExist(err) {
@@ -160,7 +160,7 @@ func (p *Processor) cleanFile(path string) {
 	info, err = os.Stat(backup)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Errorf("backup file for `%s` does't exist", path)
+			log.Errorf("backup file for `%s` does't exist", filePath)
 			return
 		} else {
 			log.WithError(err).Fatalf("can't state backup file: %s", backup)
@@ -170,11 +170,11 @@ func (p *Processor) cleanFile(path string) {
 		log.Fatal("can't find valid backup file")
 	}
 	log.Debug("try to recover ", backup)
-	err = os.Rename(backup, path)
+	err = os.Rename(backup, filePath)
 	if err != nil {
-		log.WithError(err).Fatalf("failed to recover `%s`", path)
+		log.WithError(err).Fatalf("failed to recover `%s`", filePath)
 	}
-	log.Infof("recoverd: %s", path)
+	log.Infof("recoverd: %s", filePath)
 }
 
 func (p *Processor) cleanDir(dir string) {
@@ -199,9 +199,9 @@ func (p *Processor) cleanPackage(packagePath string) {
 	for _, exclude := range excludeList {
 		excludePath = append(excludePath, path.Join(packagePath, exclude))
 	}
-	_ = filepath.WalkDir(packagePath, func(path string, d fs.DirEntry, err error) error {
-		if pathFilter(path, excludePath) {
-			log.Info("filter: ", path)
+	_ = filepath.WalkDir(packagePath, func(filePath string, d fs.DirEntry, err error) error {
+		if pathFilter(filePath, excludePath) {
+			log.Info("filter: ", filePath)
 			if d.IsDir() {
 				return fs.SkipDir
 			}
@@ -216,7 +216,7 @@ func (p *Processor) cleanPackage(packagePath string) {
 
 		filename := d.Name()
 		if strings.HasSuffix(filename, ".gen.go") {
-			files = append(files, strings.TrimSuffix(path, ".gen.go"))
+			files = append(files, strings.TrimSuffix(filePath, ".gen.go"))
 		}
 		return nil
 	})
@@ -225,9 +225,9 @@ func (p *Processor) cleanPackage(packagePath string) {
 	}
 }
 
-func pathFilter(path string, rules []string) bool {
+func pathFilter(filePath string, rules []string) bool {
 	for _, rule := range rules {
-		if path == rule {
+		if filePath == rule {
 			return true
 		}
 	}
