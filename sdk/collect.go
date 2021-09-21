@@ -2,20 +2,31 @@ package sdk
 
 import (
 	"fmt"
+	"github.com/silentred/gid"
 	"sync/atomic"
 )
 
-var counter uint64
+var eventCounter uint32
 
-func Collect(info string) {
-	atomic.AddUint64(&counter, 1)
-	fmt.Println(info)
+func NewE(filename, path string) uint16 {
+	eventID := uint16(atomic.AddUint32(&eventCounter, 1))
+	fmt.Printf("register event %d for %s\n", eventID, path)
+	return eventID
 }
 
-func ResetCounter() {
-	atomic.StoreUint64(&counter, 0)
+func RegisterFile(filename string) struct{} {
+	fmt.Println("register file: ", filename)
+	return struct{}{}
 }
 
-func GetCounter() uint64 {
-	return atomic.LoadUint64(&counter)
+func C(id int64, x uint16) {
+	fmt.Printf("collect event: [%d] %d\n", id, x)
+}
+
+func Call(_ uint16) int64 {
+	return gid.Get()
+}
+
+func Bind(parent int64) {
+	fmt.Printf("bind parernt: %d:%d\n", parent, gid.Get())
 }

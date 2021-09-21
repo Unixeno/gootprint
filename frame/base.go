@@ -76,14 +76,23 @@ func (frame *baseFrame) IsReturn() bool {
 	return frame.isReturn
 }
 
-func (frame *baseFrame) GenBeginning(content []byte) []byte {
+func (frame *baseFrame) GenBeginning(genEnv *baseEnv, content []byte) []byte {
 	log.Error("implement me: ", frame.path)
 	return content
 }
 
-func (frame *baseFrame) GenEnding(content []byte) []byte {
+func (frame *baseFrame) GenEnding(genEnv *baseEnv, content []byte) []byte {
 	log.Error("implement me: ", frame.path)
 	return content
+}
+
+func (frame *baseFrame) GenEnv(genEnv *baseEnv) []byte {
+	log.Error("implement me: ", frame.path)
+	return []byte{}
+}
+
+func (frame *baseFrame) getStdPath() string {
+	return fmt.Sprintf("{%d[%d:%d]%d}%s", frame.headBegin, frame.bodyBegin, frame.bodyEnd, frame.blockEnd, frame.path)
 }
 
 func (frame *baseFrame) String() string {

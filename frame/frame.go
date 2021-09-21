@@ -16,8 +16,9 @@ type Frame interface {
 	Append(Frame)                                 // append an inner frame
 	SetPosLine(headBegin, bodyBegin, bodyEnd int) // set line number
 
-	GenBeginning(content []byte) []byte // generator function for BodyBeginning
-	GenEnding(content []byte) []byte    // generator function for BodyEnding
+	GenBeginning(genEnv *baseEnv, content []byte) []byte // generator function for BodyBeginning
+	GenEnding(genEnv *baseEnv, content []byte) []byte    // generator function for BodyEnding
+	GenEnv(genEnv *baseEnv) []byte                       // generator function for env at end of file
 
 	fmt.Stringer
 }

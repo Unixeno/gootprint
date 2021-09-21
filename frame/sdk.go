@@ -1,14 +1,22 @@
 package frame
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
-const SDKPackage = `gootprint_sdk "github.com/Unixeno/gootprint/sdk"` // trace sdk used in import statement
-const SDKPackagePrefix = "gootprint_sdk."                             // the prefix to access trace sdk package
+const SDKPackage = `_g_sdk "github.com/Unixeno/gootprint/sdk"` // trace sdk used in import statement
+const SDKPackagePrefix = "_g_sdk."                             // the prefix to access trace sdk package
 
-func genLineCode(method, args string) string {
-	return fmt.Sprintf("%s%s(%s);", SDKPackagePrefix, method, args)
+func wrapString(src string) string {
+	return strconv.Quote(src)
 }
 
-func genLineCodeWithStringArg(method, arg string) string {
-	return fmt.Sprintf("%s%s(\"%s\");", SDKPackagePrefix, method, arg)
+func genSDKFunCallWithArgs(method string, args ...string) string {
+	formattedArgs := ""
+	if len(args) > 0 {
+		formattedArgs = strings.Join(args, ", ")
+	}
+	return fmt.Sprintf("%s%s(%s);", SDKPackagePrefix, method, formattedArgs)
 }

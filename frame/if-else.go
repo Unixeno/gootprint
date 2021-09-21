@@ -6,21 +6,29 @@ import (
 
 type IfElseFrame struct {
 	*baseFrame
+	varName string
 }
 
 func NewIfElseFrame(path string) *IfElseFrame {
 	return &IfElseFrame{
-		NewBaseFrame(path),
+		baseFrame: NewBaseFrame(path),
 	}
 }
 
-func (frame *IfElseFrame) GenBeginning(content []byte) []byte {
+func (frame *IfElseFrame) GenBeginning(genEnv *baseEnv, content []byte) []byte {
 	return content
 }
 
-func (frame *IfElseFrame) GenEnding(content []byte) []byte {
+func (frame *IfElseFrame) GenEnding(genEnv *baseEnv, content []byte) []byte {
+	frame.varName = genEnv.genPointVarName()
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString(genLineCodeWithStringArg("Collect", frame.path))
+	buf.WriteString(genEnv.genCollect(frame.varName))
 	buf.Write(content)
 	return buf.Bytes()
+}
+
+func (frame *IfElseFrame) GenEnv(genEnv *baseEnv) []byte {
+	buffer := bytes.NewBuffer(nil)
+	buffer.WriteString(genEnv.genPoint(frame.varName, frame.getStdPath()))
+	return buffer.Bytes()
 }
