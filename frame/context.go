@@ -1,6 +1,7 @@
 package frame
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 
@@ -10,14 +11,15 @@ import (
 type Context struct {
 	rootFrame Frame // root frame is the package frame
 	indexes   []int // record levels from root frame to current frame，works as a stack
-	hooks     map[int][]func([]byte) []byte
+	hooks     map[int][]func(*baseEnv, []byte) []byte
+	genEnv    *baseEnv
 }
 
 func NewFrameContext(filename, packageName string, bodyBegin, bodyEnd int) *Context {
 	return &Context{
 		rootFrame: NewPackageFrame(filename, packageName, bodyBegin, bodyEnd),
 		indexes:   make([]int, 1, 16),
-		hooks:     map[int][]func([]byte) []byte{},
+		hooks:     map[int][]func(*baseEnv, []byte) []byte{},
 	}
 }
 
@@ -83,16 +85,25 @@ func (root *Context) PrepareGenerate() {
 			log.Infof("skip `%s` because it's unreachable", frame.Path())
 		}
 	})
+	root.genEnv = root.rootFrame.(*PackageFrame).getEnv()
 	log.Info("prepared")
 }
 
 func (root *Context) GenerateLine(line int, content []byte) []byte {
 	if genFuncs, exist := root.hooks[line]; exist {
 		for _, genFunc := range genFuncs {
-			content = genFunc(content)
+			content = genFunc(root.genEnv, content)
 		}
 	}
 	return content
+}
+
+func (root *Context) GenerateEnv() []byte {
+	buffer := bytes.NewBuffer(nil)
+	Visit(root.rootFrame, VisitPreOrder, func(frame Frame) {
+		buffer.Write(frame.GenEnv(root.genEnv))
+	})
+	return buffer.Bytes()
 }
 
 func (root *Context) GetInnerName(suffix string) string {

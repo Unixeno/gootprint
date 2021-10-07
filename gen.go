@@ -57,8 +57,14 @@ func (g *Generator) Generate() {
 		g.outputFile.Write(g.contextFrame.GenerateLine(lineNumber+1, line))
 		if lineNumber < len(lines)-1 {
 			g.outputFile.Write(newLine)
+		} else {
+			// last line, if source file doesn't end with a new line, we need to add one
+			if len(line) != 0 {
+				_, _ = g.outputFile.Write(newLine)
+			}
 		}
 	}
+	g.outputFile.Write(g.contextFrame.GenerateEnv())
 }
 
 func (g *Generator) RenameSource() {
